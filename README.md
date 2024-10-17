@@ -1,2 +1,2 @@
-# hello-elementor-optimized-theme
-Hello Elementor optimized theme
+# Hello elementor Optimized Child-Theme
+Hello Elementor optimized child-theme
