@@ -103,6 +103,7 @@ class HelloElementorOptimizedChild{
 	}
 
 	public function convertir_url_absoluta_a_relativa($url){
+		if (is_admin()) return $url;
 		// Verifica si la URL es absoluta
 		if (strpos($url, home_url()) === 0) {
 			// Si es una URL dentro de tu dominio, la convertimos a relativa
