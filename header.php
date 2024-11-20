@@ -18,7 +18,13 @@ $skip_link_url = apply_filters( 'hello_elementor_skip_link_url', '#content' );
 <!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
-	<?php wp_head(); ?>
+<?php 
+ob_start();
+wp_head();
+$wp_head = ob_get_contents();
+ob_end_clean();
+echo preg_replace('/[\x00-\x1F\xFF]/','',$wp_head);
+?>
 </head>
 <body <?php body_class(); ?>>
 
