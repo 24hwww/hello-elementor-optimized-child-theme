@@ -39,13 +39,13 @@ class HelloElementorOptimizedChild{
 		add_action('wp_head', array($this,'agrupar_meta_y_link'), 999);
 		add_filter( 'the_generator', '__return_null' );
 
-		add_filter('the_content', array($this,'convertir_url_absoluta_a_relativa'));
+		/*add_filter('the_content', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('script_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('style_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('wp_get_attachment_url', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('post_thumbnail_html', array($this,'convertir_url_absoluta_a_relativa'));
+		add_filter('post_thumbnail_html', array($this,'convertir_url_absoluta_a_relativa'));*/
 
-		add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
+		//add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
     }
 	public function hello_elementor_child_scripts_styles() {
@@ -112,14 +112,29 @@ class HelloElementorOptimizedChild{
 		return $url; // Si no, la dejamos igual
 	}
 
-	public function delay_rel_preload_func($html, $handle, $href, $media){
-		if (is_admin()) return $html;
-		if (str_contains($handle, 'widget-')) { return $html; }
+	public function delay_rel_preload_func($tag, $handle, $src, $media){
+		if (is_admin()) return $tag;
+		if (str_contains($handle, 'widget-')) { return $tag; }
 	
-		$html = <<<EOT
-		<link rel='preload' as='style' onload="this.onload=null;this.rel='stylesheet'" id='$handle' href='$href' type='text/css' media='all' />
-		EOT;
-		return $html;
+        $nonce = wp_create_nonce();
+        $nonce = " nonce='{$nonce}'";
+        
+        ob_start();
+        ?>
+        <link rel="preload" id="<?php echo $handle; ?>-css" href="<?php echo $src; ?>" as='style' media="<?php echo $media; ?>" <?php echo $nonce; ?> />
+        <script <?php echo $nonce; ?>>
+        let css = document.getElementById('<?php echo $handle; ?>-css');
+        css.addEventListener("load", function( e ){ 
+        e.currentTarget.rel='stylesheet';
+        },{once:true});
+        </script>
+        <noscript><?php echo trim($tag); ?></noscript>
+        <?php
+        $ga = ob_get_contents();
+		ob_end_clean();
+		$_tag = preg_replace('/[\x00-\x1F\xFF]/','',$ga);
+		
+        return $tag;
 	}
 
 }
