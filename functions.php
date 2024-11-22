@@ -39,13 +39,13 @@ class HelloElementorOptimizedChild{
 		add_action('wp_head', array($this,'agrupar_meta_y_link'), 999);
 		add_filter( 'the_generator', '__return_null' );
 
-		/*add_filter('the_content', array($this,'convertir_url_absoluta_a_relativa'));
+		add_filter('the_content', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('script_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('style_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
 		add_filter('wp_get_attachment_url', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('post_thumbnail_html', array($this,'convertir_url_absoluta_a_relativa'));*/
+		add_filter('post_thumbnail_html', array($this,'convertir_url_absoluta_a_relativa'));
 
-		//add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
+		add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
     }
 	public function hello_elementor_child_scripts_styles() {
