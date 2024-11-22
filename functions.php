@@ -33,6 +33,8 @@ class HelloElementorOptimizedChild{
     }
     function __construct() {
 
+		add_action('admin_init', array($this,'check_update_theme_func'));
+
 		add_action('wp_enqueue_scripts', array($this,'hello_elementor_child_scripts_styles'), 20 );
 		add_action('wp_head', array($this,'wp_head_func'));
 		add_action('wp_head', array($this,'capturar_contenido_head'), 0);
@@ -48,6 +50,48 @@ class HelloElementorOptimizedChild{
 		add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
     }
+
+	private function curl_get_contents($url,$agent=''){
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		$data = curl_exec($ch);
+		$codigo_estado = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		return $codigo_estado == '200' ? $data : false;
+	}
+
+	public function check_update_theme_func(){
+		$get_theme = wp_get_theme();
+		$author = !empty($get_theme->get( 'Author' )) ? $get_theme->get( 'Author' ) : '';
+		$template = !empty($get_theme->get( 'ThemeURI' )) ? basename($get_theme->get( 'ThemeURI' )) : '';
+		$version_actual = !empty($get_theme->get( 'Version' )) ? basename($get_theme->get( 'Version' )) : '';
+
+		$repositorio = "{$author}/{$template}";
+		$url_release = "https://api.github.com/repos/{$repositorio}/releases/latest";
+		$datos = $this->curl_get_contents($url_release,$template);
+
+		if ($datos === FALSE) { return false; }
+
+		$release = json_decode($datos, true);
+		$version_disponible = isset($release['tag_name']) ? $release['tag_name'] : false;
+
+		if ($version_disponible === FALSE) { return false; }
+
+		if (version_compare($version_actual, $version_disponible, '<')) {
+			add_action('admin_notices', array($this,'admin_notices_check_update_theme_func'));
+		}
+	}
+
+	public function admin_notices_check_update_theme_func(){
+		echo '<div class="notice notice-warning is-dismissible">
+        <p><strong>¡Nueva actualización de plantilla disponible!</strong> Hay una nueva versión de la plantilla disponible. <a href="https://github.com/usuario/repositorio/releases" target="_blank">Haz clic aquí para obtenerla</a>.</p>
+    	</div>';
+	}
+
 	public function hello_elementor_child_scripts_styles() {
 
 		wp_dequeue_style( 'classic-theme-styles' );
