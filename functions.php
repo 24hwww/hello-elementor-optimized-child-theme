@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.0' );
+define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.3' );
 
 /**
  * Load optimized child theme scripts & styles.
@@ -39,15 +39,14 @@ class HelloElementorOptimizedChild{
 		add_action('wp_head', array($this,'wp_head_func'));
 		add_action('wp_head', array($this,'capturar_contenido_head'), 0);
 		add_action('wp_head', array($this,'agrupar_meta_y_link'), 999);
-		add_filter( 'the_generator', '__return_null' );
+		add_filter('the_generator', '__return_null' );
 
-		add_filter('the_content', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('script_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('style_loader_src', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('wp_get_attachment_url', array($this,'convertir_url_absoluta_a_relativa'));
-		add_filter('post_thumbnail_html', array($this,'convertir_url_absoluta_a_relativa'));
+		add_filter( 'style_loader_src', array($this,'remove_css_js_version'), 9999 );
+		add_filter( 'script_loader_src', array($this,'remove_css_js_version'), 9999 );		
+		add_filter('style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
-		add_filter( 'style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
+		add_action('wp_body_open', array($this,'inicio_contenido'),10);
+		add_action('wp_footer', array($this,'final_resultado_contenido'),10);		
 
     }
 
@@ -87,9 +86,12 @@ class HelloElementorOptimizedChild{
 	}
 
 	public function admin_notices_check_update_theme_func(){
-		echo '<div class="notice notice-warning is-dismissible">
-        <p><strong>¡Nueva actualización de plantilla disponible!</strong> Hay una nueva versión de la plantilla disponible. <a href="https://github.com/usuario/repositorio/releases" target="_blank">Haz clic aquí para obtenerla</a>.</p>
-    	</div>';
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p><strong><?php _e('New theme update available!', 'default'); ?></strong> 
+			<?php printf(__('A new version of your theme is available. <a href="%s" target="_blank">Click here to get it</a>.', 'default'), 'https://github.com/usuario/repositorio/releases'); ?></p>
+		</div>
+		<?php
 	}
 
 	public function hello_elementor_child_scripts_styles() {
@@ -146,14 +148,10 @@ class HelloElementorOptimizedChild{
 	    echo $html . $head_content_sin_meta_link;
 	}
 
-	public function convertir_url_absoluta_a_relativa($url){
-		if (is_admin()) return $url;
-		// Verifica si la URL es absoluta
-		if (strpos($url, home_url()) === 0) {
-			// Si es una URL dentro de tu dominio, la convertimos a relativa
-			return preg_replace('#^' . preg_quote(home_url(), '#') . '#', '', $url);
-		}
-		return $url; // Si no, la dejamos igual
+	public function remove_css_js_version($src){
+		if( strpos( $src, '?ver=' ) )
+        $src = remove_query_arg( 'ver', $src );
+    	return $src;
 	}
 
 	public function delay_rel_preload_func($tag, $handle, $src, $media){
@@ -181,6 +179,21 @@ class HelloElementorOptimizedChild{
         return $tag;
 	}
 
+	public function inicio_contenido(){
+		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) { return false;}
+		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() ) {return false;}
+		ob_start();
+	}
+
+	public function final_resultado_contenido(){
+		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) { return false;}
+		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() ) {return false;}
+		$code = ob_get_clean();
+		$cleaned_code = trim(preg_replace('/\s+/', ' ', $code));
+		$formatted_code = preg_replace('/>\s*</', ">\n<", $cleaned_code);
+		echo '<!-- ----- Optimized ----- -->'."\n";
+		echo $formatted_code;
+	}	
+
 }
 $GLOBALS['HelloElementorOptimizedChild'] = HelloElementorOptimizedChild::get_instance();
-
