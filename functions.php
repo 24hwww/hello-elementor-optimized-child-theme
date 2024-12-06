@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.3' );
+define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.4' );
 
 /**
  * Load optimized child theme scripts & styles.
@@ -41,13 +41,14 @@ class HelloElementorOptimizedChild{
 		add_action('wp_head', array($this,'agrupar_meta_y_link'), 999);
 		add_filter('the_generator', '__return_null' );
 
-		add_filter( 'style_loader_src', array($this,'remove_css_js_version'), 9999 );
-		add_filter( 'script_loader_src', array($this,'remove_css_js_version'), 9999 );		
+		add_filter('style_loader_src', array($this,'remove_css_js_version'), 9999 );
+		add_filter('script_loader_src', array($this,'remove_css_js_version'), 9999 );		
 		add_filter('style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
-		add_action('wp_body_open', array($this,'inicio_contenido'),10);
-		add_action('wp_footer', array($this,'final_resultado_contenido'),10);		
-
+		if ( did_action( 'elementor/loaded' ) ) {
+			add_action('wp_body_open', array($this,'inicio_contenido'),10);
+			add_action('wp_footer', array($this,'final_resultado_contenido'),10);		
+		}
     }
 
 	private function curl_get_contents($url,$agent=''){
