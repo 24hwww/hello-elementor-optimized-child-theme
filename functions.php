@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.4' );
+define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.5' );
 
 /**
  * Load optimized child theme scripts & styles.
@@ -44,6 +44,11 @@ class HelloElementorOptimizedChild{
 		add_filter('style_loader_src', array($this,'remove_css_js_version'), 9999 );
 		add_filter('script_loader_src', array($this,'remove_css_js_version'), 9999 );		
 		add_filter('style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
+
+	    	add_filter('rest_url_prefix', array($this,'change_name_api_slug_func')); 
+		add_filter('json_url_prefix', array($this,'change_name_api_slug_func')); 
+
+	    	add_filter('rest_authentication_errors', array($this,'security_api_wp_func')); 
 
 		if ( did_action( 'elementor/loaded' ) ) {
 			add_action('wp_body_open', array($this,'inicio_contenido'),10);
@@ -153,6 +158,19 @@ class HelloElementorOptimizedChild{
 		if( strpos( $src, '?ver=' ) )
         $src = remove_query_arg( 'ver', $src );
     	return $src;
+	}
+
+	public function change_name_api_slug_func( $slug ) { 
+	    return 'api';
+	}
+
+	public function security_api_wp_func($access){
+		if ( !is_user_logged_in() ) {
+			return new WP_Error('rest_disabled',
+				__( 'The WordPress REST API has been disabled.' ),
+				array('status' => rest_authorization_required_code(),)
+			);
+		}
 	}
 
 	public function delay_rel_preload_func($tag, $handle, $src, $media){
